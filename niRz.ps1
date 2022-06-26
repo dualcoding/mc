@@ -49,13 +49,15 @@ function Update_Ferium {
 }
 
 function Setup_Ferium {
+    Write-Host "Setting up scoop and ferium."
     Install_Scoop
     Install_Ferium
     Update_Ferium
+    Write-Host ""
 }
-Setup_Ferium
-
-
 
 function Install_Modpack {
 }
+
+
+Setup_Ferium
