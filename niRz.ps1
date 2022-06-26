@@ -41,7 +41,7 @@ function Update_Ferium {
     $last_update = (scoop bucket list |where Name -eq 'games').Updated
     $time_since_last_update = (Get-Date) - $last_update
     Write-Verbose "Time since last ferium update: $($time_since_last_update.Days) days."
-    if ($time_since_last_update.Days -ge 7) {
+    if ($time_since_last_update.Days -ge 1) {
         Write-Host "Updating ferium."
         scoop update
         scoop update ferium
