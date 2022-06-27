@@ -1,4 +1,4 @@
-﻿$MINECRAFT = "$env:APPDATA\.minecraft"
+$MINECRAFT = "$env:APPDATA\.minecraft"
 
 $nirz_profile_raw = @"
     "niRz" : {
@@ -74,8 +74,7 @@ function setup {
         Write-Host "Downloading new forge version $lastVersionId from $url."
         iwr "https://github.com/dualcoding/mc/raw/main/forge/$installer_name" -OutFile "$MINECRAFT\niRz\tmp\$installer_name"
         cd "$MINECRAFT\niRz\tmp"
-        start "$MINECRAFT\niRz\tmp\$installer_name"
-        return # restart installer after installation complete (!!wait?)
+        start "$MINECRAFT\niRz\tmp\$installer_name" -Wait
     }
 
     # download override pack if not installed
@@ -99,6 +98,7 @@ function setup {
 }
 setup
 
+start "C:\Program Files\WindowsApps\Microsoft.4297127D64EC6_1.1.17.0_x64__8wekyb3d8bbwe\Minecraft.exe"
 
 
 #* this file should be saved as "UTF8 with BOM" -- !! check what happens with github/iwr
