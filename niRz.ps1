@@ -1,4 +1,4 @@
-$MINECRAFT = "$env:APPDATA\.minecraft"
+﻿$MINECRAFT = "$env:APPDATA\.minecraft"
 
 $nirz_profile_raw = @"
     "niRz" : {
@@ -96,10 +96,15 @@ function setup {
 
 
 }
+
+
+# Quit if anything goes wrong
+$oldErrorActionPreference = $ErrorActionPreference
+$ErrorActionPreference = 'Stop'
+
 setup
 
 start "C:\Program Files\WindowsApps\Microsoft.4297127D64EC6_1.1.17.0_x64__8wekyb3d8bbwe\Minecraft.exe"
 
-
-#* this file should be saved as "UTF8 with BOM" -- !! check what happens with github/iwr
-#*? multiple pack overlays?
+# Reset $ErrorActionPreference to original value
+$ErrorActionPreference = $oldErrorActionPreference
