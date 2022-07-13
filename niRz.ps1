@@ -69,12 +69,20 @@ function setup {
     # check if forge version installed
     $lastVersionId = $nirz_profile.lastVersionId
     if (-not (Test-Path "$MINECRAFT\versions\$lastVersionId")) {
+
+        # check if java installed
+        if (-not (Get-Command java -ErrorAction Ignore)) {
+            throw "Java not installed, cannot launch installer."
+            # TODO: download & launch installer
+        }
+
+        # download and launch forge installer (player needs to click "ok")
         $installer_name = "$lastVersionId-installer.jar"
         $url = "https://github.com/dualcoding/mc/raw/main/forge/$installer_name"
         Write-Host "Downloading new forge version $lastVersionId from $url."
         iwr "https://github.com/dualcoding/mc/raw/main/forge/$installer_name" -OutFile "$MINECRAFT\niRz\tmp\$installer_name"
-        cd "$MINECRAFT\niRz\tmp"
-        start "$MINECRAFT\niRz\tmp\$installer_name" -Wait
+        start -Wait -FilePath "$MINECRAFT\niRz\tmp\$installer_name" -WorkingDirectory "$MINECRAFT\niRz\tmp"
+
     }
 
     # download override pack if not installed
