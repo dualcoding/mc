@@ -94,7 +94,9 @@ function setup {
     }
     $niRz_installed_version = $niRz_installed_profile.created
     if (-not $niRz_installed_version -eq $nirz_profile.created) {
-        rm "$MINECRAFT\niRz\installs\niRz\mods\*.jar"
+        if (Test-Path "$MINECRAFT\niRz\installs\niRz\mods" -PathType Container) {
+            rm "$MINECRAFT\niRz\installs\niRz\mods\*.jar"
+        }
         $pack_name = "niRz"
         Write-Host "Downloading pack $pack_name"
         iwr "https://github.com/dualcoding/mc/raw/main/packs/$pack_name.zip" -OutFile "$MINECRAFT\niRz\tmp\$pack_name.zip"
