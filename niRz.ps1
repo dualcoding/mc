@@ -1,5 +1,8 @@
 ﻿$MINECRAFT = "$env:APPDATA\.minecraft"
 
+
+# = PROFILES = #
+
 $nirz_profile_raw = @"
     "niRz" : {
       "created" : "2022-01-15T12:00:00.000Z",
@@ -56,6 +59,64 @@ function install_profile {
     add_launcher_profile $nirz_profile_raw
 }
 
+
+# = FORGE =#
+
+function forge_is_installed($versionId) {
+    return (Test-Path "$MINECRAFT\versions\$versionId");
+}
+
+function forge_launch_installer($installer_path) {
+
+    # try launching installer using minecraft java
+    $minecraft_java = "$env:LOCALAPPDATA\Packages\Microsoft.4297127D64EC6_8wekyb3d8bbwe\LocalCache\Local\runtime\java-runtime-beta\windows-x64\java-runtime-beta\bin\javaw.exe"
+    if (Test-Path $minecraft_java) {
+        Write-Host  "... launching forge installer using Minecraft java."
+        Start-Process -Wait -FilePath "$minecraft_java" -ArgumentList @("-jar $installer_name") -WorkingDirectory "$MINECRAFT\niRz\tmp"
+    }
+
+    # try launching installer using global java
+    elseif (Get-Command "javaw" -ErrorAction Ignore) {
+        Write-Warning "Could not find Minecraft java."
+        Write-Host    "... launching forge installer using java in path."
+        Start-Process -Wait -FilePath "javaw"           -ArgumentList @("-jar $installer_name") -WorkingDirectory "$MINECRAFT\niRz\tmp"
+    }
+
+    # failure
+    else {
+        throw "Java is not installed, cannot launch forge installer."
+    }
+
+}
+
+function forge_install ($versionId, [bool]$Force = $false) {
+    $installer_name = "$versionId-installer.jar"
+    $installer_path = "$MINECRAFT\niRz\tmp\$installer_name"
+    $installer_url = "https://github.com/dualcoding/mc/raw/main/forge/$installer_name"
+
+    # check if forge version is installed already
+    if (-not ($Force) -and (forge_is_installed($versionId))) {
+        Write-Verbose "Skipping install of Forge version '$versionId' since it's already installed."
+        return;
+    }
+
+    Write-Host "Installing new Forge version '$versionId'."
+
+    Write-Host "... downloading Forge installer $installer_url."
+    Invoke-WebRequest $installer_url -OutFile $installer_path
+
+    # launch forge installer (player needs to click "ok")
+    forge_launch_installer($installer_path)
+
+    # abort if Forge is still not installed (eg: aborted by user or installer error)
+    if (-not (forge_is_installed($versionId))) {
+        throw "Forge install failed."
+    }
+}
+
+
+#= MAIN =#
+
 function setup {
     $nirz_profile = get_profile
     if (-not $nirz_profile) {
@@ -66,24 +127,21 @@ function setup {
     update_launcher_profile $nirz_profile_raw
     $nirz_profile = get_profile
    
-    # check if forge version installed
+    # check if forge version is installed, otherwise download and launch forge installer
     $lastVersionId = $nirz_profile.lastVersionId
-    if (-not (Test-Path "$MINECRAFT\versions\$lastVersionId")) {
+    forge_install $lastVersionId
 
-        # check if java installed
-        if (-not (Get-Command java -ErrorAction Ignore)) {
-            throw "Java not installed, cannot launch installer."
-            # TODO: download & launch installer
-        }
-
-        # download and launch forge installer (player needs to click "ok")
-        $installer_name = "$lastVersionId-installer.jar"
-        $url = "https://github.com/dualcoding/mc/raw/main/forge/$installer_name"
-        Write-Host "Downloading new forge version $lastVersionId from $url."
-        iwr "https://github.com/dualcoding/mc/raw/main/forge/$installer_name" -OutFile "$MINECRAFT\niRz\tmp\$installer_name"
-        start -Wait -FilePath "$MINECRAFT\niRz\tmp\$installer_name" -WorkingDirectory "$MINECRAFT\niRz\tmp"
-
+    # copy options from .minecraft if missing (new install)
+    if (-not (Test-Path "$MINECRAFT\niRz\installs\niRz\options.txt")) {
+        Copy-Item -Path "$MINECRAFT\options.txt" -Destination "$MINECRAFT\niRz\installs\niRz\options.txt" -ErrorAction Ignore
     }
+    # copy OptiFine options if missing (ignore if not present)
+    if (-not (Test-Path "$MINECRAFT\niRz\installs\niRz\optionsof.txt")) {
+        Copy-Item -Path "$MINECRAFT\optionsof.txt" -Destination "$MINECRAFT\niRz\installs\niRz\options.txt" -ErrorAction Ignore
+    }
+    # if (-not (Test-Path "$MINECRAFT\niRz\installs\niRz\optionsshaders.txt")) {
+    #     Copy-Item -Path "$MINECRAFT\optionsshaders.txt" -Destination "$MINECRAFT\niRz\installs\niRz\optionsshaders.txt" -ErrorAction Ignore
+    # }
 
     # download override pack if not installed
     try {
@@ -95,15 +153,13 @@ function setup {
     $niRz_installed_version = $niRz_installed_profile.created
     if (-not $niRz_installed_version -eq $nirz_profile.created) {
         if (Test-Path "$MINECRAFT\niRz\installs\niRz\mods" -PathType Container) {
-            rm "$MINECRAFT\niRz\installs\niRz\mods\*.jar"
+            Remove-Item "$MINECRAFT\niRz\installs\niRz\mods\*.jar"
         }
         $pack_name = "niRz"
         Write-Host "Downloading pack $pack_name"
-        iwr "https://github.com/dualcoding/mc/raw/main/packs/$pack_name.zip" -OutFile "$MINECRAFT\niRz\tmp\$pack_name.zip"
+        Invoke-WebRequest "https://github.com/dualcoding/mc/raw/main/packs/$pack_name.zip" -OutFile "$MINECRAFT\niRz\tmp\$pack_name.zip"
         Expand-Archive "$MINECRAFT\niRz\tmp\$pack_name.zip" -DestinationPath "$MINECRAFT\niRz\installs\niRz" -Force
     }
-
-
 
 }
 
@@ -113,8 +169,7 @@ $oldErrorActionPreference = $ErrorActionPreference
 $ErrorActionPreference = 'Stop'
 
 setup
-
-start "C:\Program Files\WindowsApps\Microsoft.4297127D64EC6_1.1.17.0_x64__8wekyb3d8bbwe\Minecraft.exe"
+Start-Process "C:\Program Files\WindowsApps\Microsoft.4297127D64EC6_1.1.17.0_x64__8wekyb3d8bbwe\Minecraft.exe"
 
 # Reset $ErrorActionPreference to original value
 $ErrorActionPreference = $oldErrorActionPreference
