@@ -137,7 +137,7 @@ function setup {
     }
     # copy OptiFine options if missing (ignore if not present)
     if (-not (Test-Path "$MINECRAFT\niRz\installs\niRz\optionsof.txt")) {
-        Copy-Item -Path "$MINECRAFT\optionsof.txt" -Destination "$MINECRAFT\niRz\installs\niRz\options.txt" -ErrorAction Ignore
+        Copy-Item -Path "$MINECRAFT\optionsof.txt" -Destination "$MINECRAFT\niRz\installs\niRz\optionsof.txt" -ErrorAction Ignore
     }
     # if (-not (Test-Path "$MINECRAFT\niRz\installs\niRz\optionsshaders.txt")) {
     #     Copy-Item -Path "$MINECRAFT\optionsshaders.txt" -Destination "$MINECRAFT\niRz\installs\niRz\optionsshaders.txt" -ErrorAction Ignore
